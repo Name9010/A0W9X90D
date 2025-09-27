@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>📊 Quotex Binary Signal Hub v7.0</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: #0a0a12;
+      color: #e0e0e0;
+      padding: 20px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(10, 10, 30, 0.3) 0%, transparent 20%),
+        radial-gradient(circle at 90% 80%, rgba(20, 20, 50, 0.3) 0%, transparent 20%);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+      padding: 20px;
+      background: linear-gradient(135deg, #0d0d1a, #120030);
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1), transparent);
+      animation: shine 3s infinite;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    .header h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(90deg, #00f7ff, #00c8ff, #ff00ff, #ff55ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 10px;
+      text-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+    }
+
+    .header p {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .status-panel {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .status-box {
+      background: rgba(30, 30, 50, 0.8);
+      padding: 14px 18px;
+      border-radius: 10px;
+      width: calc(20% - 15px);
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(0, 200, 255, 0.3);
+    }
+
+    .status-box:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 200, 255, 0.4);
+    }
+
+    .status-title {
+      font-size: 0.9rem;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    .status-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #00f7ff;
+    }
+
+    .status-value.connected {
+      color: #00ff88;
+    }
+
+    .status-value.disconnected {
+      color: #ff5555;
+    }
+
+    .status-value.warning {
+      color: #ffaa00;
+    }
+
+    .liquidity-indicator {
+      width: 100%;
+      height: 6px;
+      background: linear-gradient(90deg, #00c8ff, #00f7ff);
+      border-radius: 3px;
+      margin-top: 10px;
+      position: relative;
+    }
+
+    .liquidity-indicator::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 70%;
+      height: 100%;
+      background: linear-gradient(90deg, #ff00ff, #ff55ff);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0% { width: 50%; }
+      50% { width: 80%; }
+      100% { width: 50%; }
+    }
+
+    .main-content {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .scanner-panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(10, 15, 30, 0.95);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #00c8ff;
+      position: relative;
+    }
+
+    .scanner-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(0, 200, 255, 0.05), transparent);
+      pointer-events: none;
+    }
+
+    .scanner-item {
+      padding: 12px;
+      margin: 6px 0;
+      background: rgba(30, 30, 50, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      position: relative;
+      border-left: 3px solid #00c8ff;
+    }
+
+    .scanner-item:hover {
+      background: rgba(50, 50, 100, 0.6);
+      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(0, 200, 255, 0.3);
+    }
+
+    .scanner-item::before {
+      content: "⚡";
+      color: #ffd700;
+      margin-right: 10px;
+      animation: twinkle 1.2s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.7; transform: scale(1); }
+      to { opacity: 1; transform: scale(1.1); }
+    }
+
+    .flag {
+      width: 28px;
+      height: 20px;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-right: 8px;
+      box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+
+    .flag img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .pair-name {
+      color: #00f7ff;
+      font-weight: bold;
+      margin-right: 8px;
+      font-size: 1.1rem;
+    }
+
+    .otc {
+      color: #ffaa00;
+      font-size: 0.85rem;
+      background: rgba(255, 170, 0, 0.2);
+      padding: 3px 8px;
+      border-radius: 12px;
+      margin-right: 8px;
+    }
+
+    .scan-status {
+      color: #00ff88;
+      font-size: 0.85rem;
+      margin-left: auto;
+    }
+
+    .signals-panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(10, 15, 30, 0.95);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid #00c8ff;
+      position: relative;
+    }
+
+    .signals-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(0, 200, 255, 0.05), transparent);
+      pointer-events: none;
+    }
+
+    .signal-item {
+      padding: 12px;
+      margin: 6px 0;
+      background: rgba(30, 30, 50, 0.4);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      position: relative;
+      border-left: 3px solid #ff55ff;
+    }
+
+    .signal-item:hover {
+      background: rgba(100, 50, 100, 0.6);
+      transform: scale(1.02);
+      box-shadow: 0 0 15px rgba(255, 0, 255, 0.3);
+    }
+
+    .signal-item::before {
+      content: "🎯";
+      color: #ffd700;
+      margin-right: 10px;
+      animation: twinkle 1.2s infinite alternate;
+    }
+
+    .callput {
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .call {
+      color: #00ff88;
+    }
+
+    .put {
+      color: #ff5555;
+    }
+
+    .signal-status {
+      color: #00ff88;
+      font-size: 0.85rem;
+      margin-left: auto;
+    }
+
+    .logs-panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(10, 15, 30, 0.95);
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      font-family: 'Courier New', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #00f7ff;
+      height: 500px;
+      overflow-y: auto;
+      border: 1px solid #00c8ff;
+      position: relative;
+    }
+
+    .logs-panel::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, transparent, rgba(0, 200, 255, 0.05), transparent);
+      pointer-events: none;
+    }
+
+    .logs-panel .log {
+      margin: 5px 0;
+      font-size: 0.95rem;
+    }
+
+    .logs-panel .success { color: #00ff88; }
+    .logs-panel .warning { color: #ffaa00; }
+    .logs-panel .error { color: #ff5555; }
+    .logs-panel .info { color: #00c8ff; }
+    .logs-panel .sent { color: #ff55ff; }
+
+    .admin-button {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(90deg, #ff00ff, #ff55ff);
+      color: white;
+      border: none;
+      padding: 14px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 1000;
+      box-shadow: 0 0 20px rgba(255, 0, 255, 0.7);
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    .admin-button:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(255, 0, 255, 1);
+    }
+
+    .toggle-auto {
+      margin-top: 10px;
+      text-align: center;
+      padding: 8px;
+      background: rgba(30, 30, 50, 0.8);
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .toggle-auto button {
+      background: linear-gradient(90deg, #00c8ff, #00f7ff);
+      color: #000;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .admin-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(10px);
+      z-index: 999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .admin-form {
+      background: rgba(30, 30, 50, 0.95);
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8);
+      width: 100%;
+      max-width: 450px;
+      border: 1px solid #00c8ff;
+    }
+
+    .admin-form h3 {
+      color: #ff55ff;
+      margin-bottom: 20px;
+      text-align: center;
+      font-size: 1.5rem;
+    }
+
+    .admin-form input {
+      width: 100%;
+      padding: 12px;
+      margin: 12px 0;
+      border-radius: 8px;
+      border: 1px solid #00c8ff;
+      background: rgba(10, 15, 30, 0.8);
+      color: #e0e0e0;
+      font-size: 1.1rem;
+    }
+
+    .admin-form button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      background: linear-gradient(90deg, #00c8ff, #00f7ff);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 1.1rem;
+    }
+
+    .admin-form button:hover {
+      background: linear-gradient(90deg, #00f7ff, #00c8ff);
+      transform: scale(1.05);
+    }
+
+    .send-panel {
+      margin-top: 20px;
+      background: rgba(30, 30, 50, 0.9);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+      display: none;
+      border: 1px solid #00c8ff;
+    }
+
+    .send-panel h3 {
+      color: #00f7ff;
+      margin-bottom: 15px;
+      font-size: 1.3rem;
+    }
+
+    .send-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .send-form input, .send-form select, .send-form button {
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid #00c8ff;
+      background: rgba(10, 15, 30, 0.8);
+      color: #e0e0e0;
+      font-size: 1rem;
+    }
+
+    .send-form button {
+      background: linear-gradient(90deg, #00c8ff, #00f7ff);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .send-form button:hover {
+      background: linear-gradient(90deg, #00f7ff, #00c8ff);
+      transform: scale(1.05);
+    }
+
+    /* Mobile */
+    @media (max-width: 768px) {
+      .status-box {
+        width: calc(50% - 15px);
+      }
+      .main-content {
+        flex-direction: column;
+      }
+      .admin-button {
+        bottom: 15px;
+        right: 15px;
+        padding: 12px 20px;
+        font-size: 1rem;
+      }
+      .header h1 {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1>📊 Quotex Binary Signal Hub v7.0</h1>
+    <p>CALL/PUT Signals — HyperScan Mode — OTC Pairs</p>
+  </div>
+
+  <div class="status-panel">
+    <div class="status-box">
+      <div class="status-title">ACCOUNT STATUS</div>
+      <div class="status-value connected">CONNECTED ✅</div>
+      <div class="liquidity-indicator"></div>
+    </div>
+    <div class="status-box">
+      <div class="status-title">SERVER</div>
+      <div class="status-value connected" id="serverValue">QUOTEX-SERVER-07 🟢</div>
+      <div class="liquidity-indicator"></div>
+    </div>
+    <div class="status-box">
+      <div class="status-title">TOKEN</div>
+      <div class="status-value warning" id="tokenValue">qxtk_8d7a2f... ✅</div>
+      <div class="liquidity-indicator"></div>
+    </div>
+    <div class="status-box">
+      <div class="status-title">WS STATUS</div>
+      <div class="status-value connected">OPEN 🔗</div>
+      <div class="liquidity-indicator"></div>
+    </div>
+    <div class="status-box">
+      <div class="status-title">BALANCE</div>
+      <div class="status-value" id="balanceValue">$0.00 💰</div>
+      <div class="liquidity-indicator"></div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="scanner-panel" id="scannerPanel">
+      <h3 style="color: #00c8ff; margin-bottom: 12px; font-size: 1.3rem;">🌀 HyperScan Mode — Pair Scanning...</h3>
+      <!-- Buraya tarama verileri eklenecek -->
+    </div>
+
+    <div class="signals-panel" id="signalsPanel">
+      <h3 style="color: #ff55ff; margin-bottom: 12px; font-size: 1.3rem;">🎯 Live Binary Signals</h3>
+      <div class="toggle-auto">
+        Auto Signals: <span id="autoStatus">ON</span>
+        <button id="toggleAuto">Toggle</button>
+      </div>
+      <!-- Buraya sinyaller eklenecek -->
+    </div>
+
+    <div class="logs-panel" id="logsPanel">
+      <div class="log"><span class="info">[10:32:15] </span>Connecting to Quotex WebSocket...</div>
+      <div class="log"><span class="success">[10:32:16] </span>Connected to QUOTEX-SERVER-07 — Token verified</div>
+      <div class="log"><span class="info">[10:32:17] </span>Starting HyperScan Mode — Binary options scanning...</div>
+    </div>
+  </div>
+
+  <button class="admin-button" id="adminButton">🔒 ADMIN PANEL</button>
+
+  <div class="admin-panel" id="adminPanel">
+    <div class="admin-form">
+      <h3>🔑 Admin Login</h3>
+      <input type="password" id="adminPassword" placeholder="Enter Admin Password" />
+      <button id="loginButton">Login</button>
+    </div>
+  </div>
+
+  <div class="send-panel" id="sendPanel">
+    <h3>📤 Send Signal (Admin Only)</h3>
+    <form id="sendForm" class="send-form">
+      <select id="pair" required>
+        <option value="">Select Pair</option>
+        <option value="EUR/USD">EUR/USD</option>
+        <option value="GBP/JPY">GBP/JPY</option>
+        <option value="AUD/CAD">AUD/CAD</option>
+        <option value="USD/CHF">USD/CHF</option>
+        <option value="BTC/USD">BTC/USD</option>
+        <option value="ETH/USD">ETH/USD</option>
+        <option value="XAU/USD">XAU/USD</option>
+        <option value="USD/BRL">USD/BRL</option>
+        <option value="CAD/CHF">CAD/CHF</option>
+        <option value="EUR/GBP">EUR/GBP</option>
+        <option value="EUR/NZD">EUR/NZD</option>
+        <option value="GBP/USD">GBP/USD</option>
+        <option value="USD/CAD">USD/CAD</option>
+        <option value="AUD/CAD">AUD/CAD</option>
+        <option value="AUD/JPY">AUD/JPY</option>
+        <option value="EUR/CHF">EUR/CHF</option>
+        <option value="USD/EGP">USD/EGP</option>
+        <option value="USD/TRY">USD/TRY</option>
+        <option value="NZD/CHF">NZD/CHF</option>
+        <option value="USD/BDT">USD/BDT</option>
+        <option value="USD/MXN">USD/MXN</option>
+        <option value="AUD/USD">AUD/USD</option>
+        <option value="USD/PKR">USD/PKR</option>
+        <option value="USD/IDR">USD/IDR</option>
+        <option value="CHF/JPY">CHF/JPY</option>
+        <option value="EUR/SGD">EUR/SGD</option>
+        <option value="GBP/JPY">GBP/JPY</option>
+        <option value="AUD/CHF">AUD/CHF</option>
+        <option value="USD/ZAR">USD/ZAR</option>
+        <option value="GBP/CAD">GBP/CAD</option>
+        <option value="GBP/CHF">GBP/CHF</option>
+      </select>
+      <select id="callput" required>
+        <option value="">Call or Put</option>
+        <option value="CALL">CALL 📈</option>
+        <option value="PUT">PUT 📉</option>
+      </select>
+      <input type="text" id="risk" placeholder="Risk (LOW/MEDIUM/HIGH)" required />
+      <input type="text" id="sender" placeholder="Your Name / Device ID" required />
+      <button type="submit">Send Signal ➡️</button>
+    </form>
+
+    <h3 style="margin-top: 20px; color: #00f7ff;">💰 Update Balance (Admin)</h3>
+    <form id="balanceForm" class="send-form">
+      <input type="number" id="newBalance" placeholder="New Balance ($)" step="0.01" required />
+      <button type="submit">Update Balance</button>
+    </form>
+  </div>
+
+  <script>
+    const scannerPanel = document.getElementById('scannerPanel');
+    const signalsPanel = document.getElementById('signalsPanel');
+    const logsPanel = document.getElementById('logsPanel');
+    const adminButton = document.getElementById('adminButton');
+    const adminPanel = document.getElementById('adminPanel');
+    const adminPassword = document.getElementById('adminPassword');
+    const loginButton = document.getElementById('loginButton');
+    const sendPanel = document.getElementById('sendPanel');
+    const sendForm = document.getElementById('sendForm');
+    const balanceForm = document.getElementById('balanceForm');
+    const balanceValue = document.getElementById('balanceValue');
+    const serverValue = document.getElementById('serverValue');
+    const tokenValue = document.getElementById('tokenValue');
+    const toggleAuto = document.getElementById('toggleAuto');
+    const autoStatus = document.getElementById('autoStatus');
+
+    let autoSignalsEnabled = true;
+
+    // Admin şifresi (gizli)
+    const ADMIN_PASSWORD = "binary123"; // ← Değiştirmeyi unutma!
+
+    // WebSocket Simülasyonu
+    let ws = {
+      connected: true,
+      onmessage: null,
+      onopen: null,
+      onclose: null,
+      send: function(msg) {
+        if (this.connected) {
+          addLog(`Signal sent: ${msg}`, 'sent');
+          simulateIncomingSignal(JSON.parse(msg));
+        } else {
+          addLog("WebSocket disconnected. Cannot send.", 'error');
+        }
+      },
+      close: function() {
+        this.connected = false;
+        addLog("WebSocket connection closed.", 'warning');
+      }
+    };
+
+    // WebSocket açıldı
+    setTimeout(() => {
+      ws.onopen && ws.onopen();
+      addLog("WebSocket opened — Ready to receive/send signals", 'success');
+    }, 1000);
+
+    function addLog(message, type = 'info') {
+      const log = document.createElement('div');
+      log.className = 'log';
+      log.innerHTML = `<span class="${type}">[${new Date().toLocaleTimeString()}] </span>${message}`;
+      logsPanel.appendChild(log);
+      logsPanel.scrollTop = logsPanel.scrollHeight;
+    }
+
+    function addScannerItem(pair, flags, status = "SCANNING") {
+      const item = document.createElement('div');
+      item.className = 'scanner-item';
+
+      // Bayraklar
+      const flagDiv = document.createElement('div');
+      flagDiv.style.display = 'flex';
+      flags.forEach(flagCode => {
+        const flag = document.createElement('div');
+        flag.className = 'flag';
+        const img = document.createElement('img');
+        img.src = `https://flagsapi.com/${flagCode.toUpperCase()}/flat/64.png`;
+        img.alt = flagCode;
+        flag.appendChild(img);
+        flagDiv.appendChild(flag);
+      });
+
+      const pairName = document.createElement('span');
+      pairName.className = 'pair-name';
+      pairName.textContent = pair;
+
+      const otcLabel = document.createElement('span');
+      otcLabel.className = 'otc';
+      otcLabel.textContent = '(OTC)';
+
+      const scanStatus = document.createElement('span');
+      scanStatus.className = 'scan-status';
+      scanStatus.textContent = status;
+
+      item.appendChild(flagDiv);
+      item.appendChild(pairName);
+      item.appendChild(otcLabel);
+      item.appendChild(scanStatus);
+
+      scannerPanel.prepend(item);
+
+      if (scannerPanel.children.length > 25) {
+        scannerPanel.removeChild(scannerPanel.lastChild);
+      }
+    }
+
+    function addSignal(signal) {
+      if (!autoSignalsEnabled) return;
+
+      const item = document.createElement('div');
+      item.className = 'signal-item';
+      item.innerHTML = `
+        <div style="display:flex;align-items:center;">
+          <div class="flag"><img src="https://flagsapi.com/${signal.pair.split('/')[0].substring(0,2).toUpperCase()}/flat/64.png" alt="${signal.pair.split('/')[0]}"/></div>
+          <div class="flag"><img src="https://flagsapi.com/${signal.pair.split('/')[1].substring(0,2).toUpperCase()}/flat/64.png" alt="${signal.pair.split('/')[1]}"/></div>
+        </div>
+        <span class="pair-name">${signal.pair}</span>
+        <span class="otc">(OTC)</span>
+        <span class="callput ${signal.callput.toLowerCase()}">${signal.callput}</span>
+        <span class="signal-status">${signal.risk} — From: ${signal.sender}</span>
+      `;
+      signalsPanel.appendChild(item);
+
+      if (signalsPanel.children.length > 25) {
+        signalsPanel.removeChild(signalsPanel.firstChild.nextSibling); // ilk baştaki başlık hariç
+      }
+    }
+
+    function simulateIncomingSignal(sentSignal) {
+      const signal = {
+        ...sentSignal,
+        volume: Math.floor(Math.random() * 10000 + 5000) + "K",
+        spread: (Math.random() * 0.0005 + 0.0001).toFixed(5),
+        timestamp: new Date().toLocaleTimeString()
+      };
+
+      addSignal(signal);
+      addLog(`Binary signal: ${signal.pair} ${signal.callput} — Risk: ${signal.risk} — From: ${signal.sender}`, 'info');
+    }
+
+    // Admin paneli aç/kapat
+    adminButton.addEventListener('click', () => {
+      adminPanel.style.display = 'flex';
+    });
+
+    loginButton.addEventListener('click', () => {
+      if (adminPassword.value === ADMIN_PASSWORD) {
+        adminPanel.style.display = 'none';
+        sendPanel.style.display = 'block';
+        addLog("Admin panel opened — You can now send signals & update balance", 'success');
+      } else {
+        addLog("Incorrect password!", 'error');
+      }
+    });
+
+    // Form submit
+    sendForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      const pair = document.getElementById('pair').value;
+      const callput = document.getElementById('callput').value;
+      const risk = document.getElementById('risk').value;
+      const sender = document.getElementById('sender').value;
+
+      if (!pair || !callput || !risk || !sender) {
+        addLog("All fields are required!", 'error');
+        return;
+      }
+
+      const signal = {
+        pair,
+        callput,
+        risk,
+        sender,
+        type: "manual"
+      };
+
+      ws.send(JSON.stringify(signal));
+      sendForm.reset();
+    });
+
+    // Balance update
+    balanceForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const newBalance = parseFloat(document.getElementById('newBalance').value);
+      if (isNaN(newBalance)) {
+        addLog("Invalid balance amount!", 'error');
+        return;
+      }
+      balanceValue.textContent = `$${newBalance.toFixed(2)} 💰`;
+      addLog(`Balance updated to: $${newBalance.toFixed(2)}`, 'success');
+      balanceForm.reset();
+    });
+
+    // Auto sinyalleri aç/kapat
+    toggleAuto.addEventListener('click', () => {
+      autoSignalsEnabled = !autoSignalsEnabled;
+      autoStatus.textContent = autoSignalsEnabled ? "ON" : "OFF";
+      autoStatus.style.color = autoSignalsEnabled ? "#00ff88" : "#ff5555";
+      addLog(`Auto signals turned ${autoSignalsEnabled ? 'ON' : 'OFF'}`, autoSignalsEnabled ? 'success' : 'warning');
+    });
+
+    // Rastgele server ve token üret
+    function generateRandomServer() {
+      const servers = [
+        "QUOTEX-SERVER-01", "QUOTEX-SERVER-02", "QUOTEX-SERVER-03", "QUOTEX-SERVER-04", "QUOTEX-SERVER-05",
+        "QUOTEX-SERVER-06", "QUOTEX-SERVER-07", "QUOTEX-SERVER-08", "QUOTEX-SERVER-09", "QUOTEX-SERVER-10",
+        "QUOTEX-BACKUP-01", "QUOTEX-HYPER-01", "QUOTEX-OTC-01", "QUOTEX-MAIN-01", "QUOTEX-EDGE-01"
+      ];
+      return servers[Math.floor(Math.random() * servers.length)];
+    }
+
+    function generateRandomToken() {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let token = 'qxtk_';
+      for (let i = 0; i < 8; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return token;
+    }
+
+    // Her 10 saniyede bir server ve token güncelle
+    setInterval(() => {
+      serverValue.textContent = `${generateRandomServer()} 🟢`;
+      tokenValue.textContent = `${generateRandomToken()}... ✅`;
+    }, 10000);
+
+    // Rastgele pair’leri tarayalım
+    const allPairs = [
+      { pair: "USD/BRL", flags: ["us", "br"] },
+      { pair: "CAD/CHF", flags: ["ca", "ch"] },
+      { pair: "EUR/GBP", flags: ["eu", "gb"] },
+      { pair: "EUR/NZD", flags: ["eu", "nz"] },
+      { pair: "GBP/USD", flags: ["gb", "us"] },
+      { pair: "USD/CAD", flags: ["us", "ca"] },
+      { pair: "AUD/CAD", flags: ["au", "ca"] },
+      { pair: "AUD/JPY", flags: ["au", "jp"] },
+      { pair: "EUR/CHF", flags: ["eu", "ch"] },
+      { pair: "USD/EGP", flags: ["us", "eg"] },
+      { pair: "USD/TRY", flags: ["us", "tr"] },
+      { pair: "NZD/CHF", flags: ["nz", "ch"] },
+      { pair: "USD/BDT", flags: ["us", "bd"] },
+      { pair: "USD/MXN", flags: ["us", "mx"] },
+      { pair: "AUD/USD", flags: ["au", "us"] },
+      { pair: "USD/PKR", flags: ["us", "pk"] },
+      { pair: "USD/IDR", flags: ["us", "id"] },
+      { pair: "CHF/JPY", flags: ["ch", "jp"] },
+      { pair: "EUR/SGD", flags: ["eu", "sg"] },
+      { pair: "GBP/JPY", flags: ["gb", "jp"] },
+      { pair: "AUD/CHF", flags: ["au", "ch"] },
+      { pair: "USD/ZAR", flags: ["us", "za"] },
+      { pair: "GBP/CAD", flags: ["gb", "ca"] },
+      { pair: "GBP/CHF", flags: ["gb", "ch"] },
+      { pair: "EUR/JPY", flags: ["eu", "jp"] },
+      { pair: "NZD/USD", flags: ["nz", "us"] },
+      { pair: "AUD/NZD", flags: ["au", "nz"] },
+      { pair: "CAD/JPY", flags: ["ca", "jp"] },
+      { pair: "GBP/AUD", flags: ["gb", "au"] },
+      { pair: "GBP/NZD", flags: ["gb", "nz"] },
+      { pair: "USD/PHP", flags: ["us", "ph"] },
+      { pair: "USD/EUR", flags: ["us", "eu"] },
+      { pair: "EUR/CAD", flags: ["eu", "ca"] },
+      { pair: "EUR/AUD", flags: ["eu", "au"] },
+      { pair: "NZD/CAD", flags: ["nz", "ca"] },
+      { pair: "NZD/JPY", flags: ["nz", "jp"] },
+      { pair: "USD/ARS", flags: ["us", "ar"] },
+      { pair: "USD/CHF", flags: ["us", "ch"] },
+      { pair: "USD/COP", flags: ["us", "co"] },
+      { pair: "USD/DZD", flags: ["us", "dz"] },
+      { pair: "USD/INR", flags: ["us", "in"] },
+      { pair: "USD/JPY", flags: ["us", "jp"] },
+      { pair: "USD/NGN", flags: ["us", "ng"] }
+    ];
+
+    let currentPairIndex = 0;
+
+    setInterval(() => {
+      if (currentPairIndex >= allPairs.length) {
+        currentPairIndex = 0;
+      }
+
+      const pair = allPairs[currentPairIndex];
+      addScannerItem(pair.pair, pair.flags, "SCANNING");
+
+      // Rastgele sinyal simülasyonu (sadece auto açıkken)
+      if (autoSignalsEnabled && Math.random() > 0.95) {
+        const signal = {
+          pair: pair.pair,
+          callput: Math.random() > 0.5 ? "CALL" : "PUT",
+          risk: ["LOW", "MEDIUM", "HIGH"][Math.floor(Math.random() * 3)],
+          sender: "AUTO-BOT"
+        };
+        addSignal(signal);
+        addLog(`Auto binary signal: ${signal.pair} ${signal.callput} — Risk: ${signal.risk} — From: ${signal.sender}`, 'info');
+      }
+
+      currentPairIndex++;
+    }, 150); // 150ms → Daha hızlı tarama
+
+    // İlk yüklemeler
+    setTimeout(() => {
+      addLog("HyperScan started — Scanning 1000+ binary options pairs...", 'info');
+    }, 1000);
+  </script>
+
+</body>
+</html>
