@@ -589,10 +589,10 @@
     // Admin şifresi (gizli)
     const ADMIN_PASSWORD = "binary123";
 
-    // WebSocket bağlantısı (Vercel veya Render'da çalışan backend)
+    // WebSocket bağlantısı (Render'da çalışan backend)
     const wsUrl = window.location.protocol === 'https:' 
-  ? `wss://${window.location.host}` 
-  : `ws://${window.location.host}`; // ← Vercel'e deploy ederken: wss://your-app.vercel.app
+      ? `wss://${window.location.host}` 
+      : `ws://${window.location.host}`;
     let ws;
 
     function connectWebSocket() {
@@ -866,4 +866,3 @@
 
 </body>
 </html>
-
