@@ -1,34 +1,51 @@
 const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
+const cors = require('cors');
+const path = require('path');
 
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"]
-  }
-});
+const PORT = process.env.PORT || 3000;
 
-// Frontend'i public klasöründen servis et
+// CORS izni ver
+app.use(cors());
+app.use(express.json());
 app.use(express.static('public'));
 
-io.on('connection', (socket) => {
-  console.log('Client connected:', socket.id);
+// SSE (Server-Sent Events) için
+const clients = [];
 
-  // Sinyal gönderildiğinde tüm clientlere yayınla
-  socket.on('message', (data) => {
-    io.emit('message', data);
+app.get('/events', (req, res) => {
+  res.writeHead(200, {
+    'Connection': 'keep-alive',
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    'Access-Control-Allow-Origin': '*'
   });
 
-  // Bağlantı kesildiğinde logla
-  socket.on('disconnect', () => {
-    console.log('Client disconnected:', socket.id);
+  const clientId = Date.now();
+  const newClient = {
+    id: clientId,
+    response: res
+  };
+  clients.push(newClient);
+
+  req.on('close', () => {
+    clients.splice(clients.findIndex(c => c.id === clientId), 1);
   });
 });
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+// Sinyal gönderme endpoint
+app.post('/send', (req, res) => {
+  const { type, pair, callput, risk, sender, balance } = req.body;
+
+  const data = JSON.stringify({ type, pair, callput, risk, sender, balance });
+
+  clients.forEach(client => {
+    client.response.write(`data: ${data}\n\n`);
+  });
+
+  res.json({ status: 'ok' });
+});
+
+app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
