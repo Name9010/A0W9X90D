@@ -6,15 +6,18 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
+// Frontend'i public klasöründen servis et
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
   console.log('Client connected:', socket.id);
 
+  // Sinyal gönderildiğinde tüm clientlere yayınla
   socket.on('message', (data) => {
     io.emit('message', data);
   });
 
+  // Bağlantı kesildiğinde logla
   socket.on('disconnect', () => {
     console.log('Client disconnected:', socket.id);
   });
